@@ -1,0 +1,128 @@
+<div id="planpoint-container">
+    <iframe id="planpoint" src="{{projectUrl}}" allowfullscreen></iframe>
+</div>
+<script>
+    // JavaScript for dynamic resizing and fullscreen handling
+    (() => {
+        if (typeof window !== 'undefined' && document !== 'undefined') {
+            let iframe;
+            let enableResize = true;
+            let onFullscreen = false;
+
+            function adjustSizeToContent() {
+                let iframeWindow = iframe.contentWindow;
+                if (iframeWindow && enableResize) {
+                    iframeWindow.postMessage('get_size', '*');
+                }
+            };
+
+            function openFullscreen() {
+                const element = document.querySelector('#planpoint-container');
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    element.mozRequestFullScreen();
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen();
+                } else if (element.msRequestFullscreen) {
+                    element.msRequestFullscreen();
+                }
+            }
+
+            function closeFullscreen() {
+                if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
+                }
+            }
+
+            function fullscreenHandler() {
+                onFullscreen = !onFullscreen;
+                if (!onFullscreen) {
+                    iframe.contentWindow.postMessage({ type: 'close-fs' }, '*');
+                    const iframeContainer = document.getElementById('planpoint-container');
+                    setTimeout(() => {
+                        document.documentElement.style.overflow = 'auto';
+                        iframeContainer.style.position = 'relative';
+                        iframeContainer.style.top = 'auto';
+                        iframeContainer.style.left = 'auto';
+                        iframeContainer.style.zIndex = 'auto';
+                        enableResize = true;
+                    }, 500);
+                } else {
+                    const iframeContainer = document.getElementById('planpoint-container');
+                    document.documentElement.scrollTop = 0;
+                    document.documentElement.style.overflow = 'hidden';
+                    iframeContainer.style.position = 'fixed';
+                    iframeContainer.style.top = '0';
+                    iframeContainer.style.left = '0';
+                    iframeContainer.style.height = '100vh';
+                    iframeContainer.style.width = '100%';
+                    iframeContainer.style.zIndex = '1000000000000000000000000';
+                    iframe.style.height = '100vh';
+                    iframe.style.width = '100%';
+                    enableResize = false;
+                }
+            }
+
+            window.addEventListener('message', (event) => {
+                if (event.data.type === 'fullscreen') {
+                    if (event.data.active) {
+                        openFullscreen();
+                    } else {
+                        closeFullscreen();
+                    }
+                    return;
+                } else if (event.data.type === 'resize') {
+                    const { h, w } = event.data;
+                    const iframeContainer = document.getElementById('planpoint-container');
+                    iframe.style.height = String(Math.max(window.innerHeight, h)) + 'px';
+                    iframeContainer.style.height = String(h) + 'px';
+                } else {
+                    if (typeof event.data === 'string') {
+                        const [intendedHeight, intendedWidth] = event.data.split('x');
+                        const h = parseInt(intendedHeight);
+                        const w = parseInt(intendedWidth);
+                        const iframeContainer = document.getElementById('planpoint-container');
+                        iframe.style.height = String(Math.max(window.innerHeight, h)) + 'px';
+                        iframeContainer.style.height = String(h) + 'px';
+                    }
+                }
+            });
+
+            document.addEventListener('click', function(event) {
+                const eventData = { type: event.type };
+                iframe.contentWindow.postMessage({ type: 'click', data: eventData }, '*');
+            });
+
+            document.addEventListener('scroll', function(event) {
+                const pageY = window.pageYOffset || document.documentElement.scrollTop;
+                const iframeContainer = document.getElementById('planpoint-container');
+                const { top: iframeRelativeY } = iframeContainer.getBoundingClientRect();
+                const eventData = { type: event.type, pageY, iframeY: iframeContainer.offsetTop, iframeRelativeY, iframeHeight: iframe.scrollHeight };
+                iframe.contentWindow.postMessage(eventData, '*');
+            });
+
+            document.addEventListener('fullscreenchange', fullscreenHandler);
+            document.addEventListener('webkitfullscreenchange', fullscreenHandler);
+            document.addEventListener('mozfullscreenchange', fullscreenHandler);
+            document.addEventListener('MSFullscreenChange', fullscreenHandler);
+
+            const interval = setInterval(() => {
+                iframe = document.getElementById('planpoint');
+                if (iframe) {
+                    clearInterval(interval);
+                    adjustSizeToContent();
+                    setInterval(adjustSizeToContent, 1000);
+                }
+            }, 1000);
+        }
+    })();
+</script>

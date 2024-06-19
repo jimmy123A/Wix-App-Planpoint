@@ -1,0 +1,31 @@
+/* custom.css */
+.tabs {
+    display: flex;
+    margin: 10px 0;
+  }
+  
+  .tabs button {
+    padding: 10px 20px;
+    margin-right: 5px;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    cursor: pointer;
+  }
+  
+  .tabs button.active {
+    background: #fff;
+    border-bottom: 2px solid blue;
+    font-weight: bold;
+  }
+
+  .itemsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    max-height: 520px;
+  }
+  
+  .itemsContainer > div {
+    width: 150px;
+    margin: 10px;
+  }
+  
