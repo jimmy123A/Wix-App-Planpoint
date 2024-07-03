@@ -128,46 +128,8 @@ function Index() {
     setPassword(e.target.value);
   };
 
-  async function getAuthToken(clientId: string, clientSecret: string) {
-    const tokenEndpoint = 'https://www.wix.com/oauth/access';
-    const tokenParams = new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: clientId,
-      client_secret: clientSecret,
-    });
-  
-    try {
-      const response = await axios.post(tokenEndpoint, tokenParams, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-  
-      return response.data.access_token;
-    } catch (error) {
-      console.error('Failed to get auth token:', error);
-      throw error;
-    }
-  }
-
   const handleEmbedScript = async (type: string, item: Item) => {
     try {
-      // Obtain the auth token
-      const clientId = "59303459-55ba-4c98-87ce-56ed2ad3d80e";
-      const clientSecret = "2ac417a1-1b5b-4344-bc0c-8371bf4e0588";
-      const authToken = await getAuthToken(clientId, clientSecret);
-
-      // Fetch existing embedded script parameters
-      const response = await axios.get('https://www.wixapis.com/apps/v1/scripts', {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      console.log(response.data);
-
-      const existingParameters = response.data.properties.parameters;
-
       // Update the parameters with the new project URL
       const embedUrl = type === 'projects' ? 
         `https://app.planpoint.io/${item.namespace}/${item.hostName}` : 
@@ -175,13 +137,10 @@ function Index() {
           `https://app.planpoint.io/g/${item.namespace}/${item.hostName}` : 
           `https://app.planpoint.io/enterprise/${item.namespace}/${item.hostName}`;
 
-      const newParameters = {
-        ...existingParameters,
-        "projectUrl": embedUrl
-      };
-
       await embedScript({
-        parameters: newParameters,
+        parameters: {
+          "projectUrl": embedUrl
+        },
       });
 
       alert('Script embedded successfully!');
